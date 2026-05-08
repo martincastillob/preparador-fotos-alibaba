@@ -2,12 +2,12 @@
 import React, { useState } from 'react';
 import { Upload, FileText, CheckCircle, Image as ImageIcon, Trash2, Download } from 'lucide-react';
 
-export default function AlibabaPreparador() {
+export default function Page() {
   const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
 
-  // Función para manejar la subida (Mantenemos tu lógica de Cloudinary)
   const handleUpload = async () => {
+    if (images.length === 0) return;
     setUploading(true);
     const updatedImages = [...images];
     
@@ -24,8 +24,12 @@ export default function AlibabaPreparador() {
           body: formData,
         });
         const data = await res.json();
-        updatedImages[i].url = data.secure_url;
-        updatedImages[i].status = 'completed';
+        if (data.secure_url) {
+          updatedImages[i].url = data.secure_url;
+          updatedImages[i].status = 'completed';
+        } else {
+          updatedImages[i].status = 'error';
+        }
         setImages([...updatedImages]);
       } catch (err) {
         updatedImages[i].status = 'error';
@@ -36,7 +40,7 @@ export default function AlibabaPreparador() {
   };
 
   const onFileChange = (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
     const newImages = files.map(file => ({
       file,
       id: Math.random().toString(36).substr(2, 9),
@@ -57,7 +61,6 @@ export default function AlibabaPreparador() {
           </div>
           <h1 className="text-xl font-bold tracking-tight">Alibaba <span className="text-orange-500">Bulk Photo Pro</span></h1>
         </div>
-        <div className="text-sm text-gray-500 font-medium">Cloudinary: {process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}</div>
       </header>
 
       <main className="max-w-6xl mx-auto p-8">
@@ -82,15 +85,9 @@ export default function AlibabaPreparador() {
                 <button 
                   onClick={handleUpload}
                   disabled={uploading || images.length === 0}
-                  className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-all ${uploading ? 'bg-gray-400' : 'bg-orange-500 hover:bg-orange-600 active:scale-95'}`}
+                  className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-all ${uploading || images.length === 0 ? 'bg-gray-400' : 'bg-orange-500 hover:bg-orange-600 active:scale-95'}`}
                 >
                   {uploading ? 'Subiendo...' : 'Iniciar Carga'}
-                </button>
-                <button 
-                  onClick={() => {/* Lógica Excel */}}
-                  className="w-full py-3 bg-white border-2 border-green-500 text-green-600 rounded-xl font-bold hover:bg-green-50 transition-all flex items-center justify-center gap-2"
-                >
-                  <Download size={20} /> Descargar Excel
                 </button>
               </div>
             </div>
@@ -118,7 +115,7 @@ export default function AlibabaPreparador() {
                   {images.map((img) => (
                     <div key={img.id} className="flex items-center gap-4 p-3 rounded-xl border border-gray-100 bg-gray-50 group hover:border-orange-200 transition-all">
                       <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-white flex-shrink-0">
-                        <img src={img.preview} className="w-full h-full object-cover" />
+                        <img src={img.preview} className="w-full h-full object-cover" alt="preview" />
                       </div>
                       <div className="flex-grow min-w-0">
                         <p className="text-sm font-medium truncate text-gray-700">{img.file.name}</p>
@@ -129,7 +126,7 @@ export default function AlibabaPreparador() {
                             </span>
                           ) : (
                             <span className="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-bold">
-                              {img.status === 'pending' ? 'PENDIENTE' : 'SUBIENDO...'}
+                              {img.status === 'pending' ? 'PENDIENTE' : img.status === 'error' ? 'ERROR' : 'SUBIENDO...'}
                             </span>
                           )}
                         </div>
