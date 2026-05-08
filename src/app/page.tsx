@@ -1,9 +1,17 @@
 "use client";
-import React, { useState } from 'react';
-import { Upload, FileText, CheckCircle, Image as ImageIcon, Trash2, Download } from 'lucide-react';
+import React, { useState, ChangeEvent } from 'react';
+import { Upload, FileText, CheckCircle, Image as ImageIcon, Trash2 } from 'lucide-react';
+
+interface ImageObject {
+  file: File;
+  id: string;
+  preview: string;
+  status: 'pending' | 'uploading' | 'completed' | 'error';
+  url: string;
+}
 
 export default function Page() {
-  const [images, setImages] = useState([]);
+  const [images, setImages] = useState<ImageObject[]>([]);
   const [uploading, setUploading] = useState(false);
 
   const handleUpload = async () => {
@@ -39,12 +47,13 @@ export default function Page() {
     setUploading(false);
   };
 
-  const onFileChange = (e) => {
-    const files = Array.from(e.target.files || []);
-    const newImages = files.map(file => ({
+  const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const files = Array.from(e.target.files);
+    const newImages: ImageObject[] = files.map(file => ({
       file,
       id: Math.random().toString(36).substr(2, 9),
-      preview: URL.createObjectURL(file),
+      preview: URL.createObjectURL(file as Blob),
       status: 'pending',
       url: ''
     }));
@@ -53,7 +62,6 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
-      {/* Header Estilo Alibaba */}
       <header className="bg-white border-b border-gray-200 py-4 px-8 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-2">
           <div className="bg-orange-500 p-2 rounded-lg">
@@ -65,8 +73,6 @@ export default function Page() {
 
       <main className="max-w-6xl mx-auto p-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Columna Izquierda: Control */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -81,7 +87,7 @@ export default function Page() {
                 <input type="file" className="hidden" multiple onChange={onFileChange} />
               </label>
 
-              <div className="mt-6 space-y-3">
+              <div className="mt-6">
                 <button 
                   onClick={handleUpload}
                   disabled={uploading || images.length === 0}
@@ -93,7 +99,6 @@ export default function Page() {
             </div>
           </div>
 
-          {/* Columna Derecha: Previsualización */}
           <div className="lg:col-span-2">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 min-h-[500px]">
               <div className="flex justify-between items-center mb-6">
@@ -106,7 +111,7 @@ export default function Page() {
               </div>
 
               {images.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+                <div className="flex flex-col items-center justify-center h-64 text-gray-400 text-center">
                   <ImageIcon size={48} className="mb-2 opacity-20" />
                   <p>No hay imágenes seleccionadas</p>
                 </div>
@@ -125,8 +130,8 @@ export default function Page() {
                               <CheckCircle size={10} /> LISTO
                             </span>
                           ) : (
-                            <span className="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-bold">
-                              {img.status === 'pending' ? 'PENDIENTE' : img.status === 'error' ? 'ERROR' : 'SUBIENDO...'}
+                            <span className="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-bold uppercase">
+                              {img.status}
                             </span>
                           )}
                         </div>
